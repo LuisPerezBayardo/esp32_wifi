@@ -6,26 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// =======================================================
-/// CONFIG (AJUSTA ESTO A TU PROYECTO)
-/// =======================================================
-class AppConfig {
-  // MQTT
-  static const String mqttHost = '192.168.1.10';
-  static const int mqttPort = 1883;
-
-  // Backend HTTP (para alertas + comandos de actuadores)
-  static const String backendBaseUrl = 'http://192.168.1.10:3000';
-  static const String apiVersion = 'v1';
-
-  // PlantId (debe coincidir con tus topics industrial/{plantId}/...)
-  static const String plantId = 'plant_01';
-
-  // SharedPreferences keys (ajústalos a los que ya usas en login)
-  static const String spAccessTokenKey = 'access_token';
-  static const String spCanControlActuatorsKey = 'canControlActuators';
-}
+import 'package:esp32_wifi/config/app_config.dart';
 
 /// =======================================================
 /// MODELOS (UI)
@@ -330,6 +311,59 @@ class ActuatorsApi {
   }
 }
 
+class DevicesApi {
+  DevicesApi({required this.baseUrl, required this.apiVersion});
+
+  final String baseUrl;
+  final String apiVersion;
+
+  Uri _u(String path, [Map<String, String>? q]) {
+    final uri = Uri.parse('$baseUrl/api/$apiVersion$path');
+    return q == null ? uri : uri.replace(queryParameters: q);
+  }
+
+  Future<List<DeviceSnapshot>> getDevices({
+    required String token,
+    String? plantId,
+  }) async {
+    final q = <String, String>{};
+    if (plantId != null) q['plantId'] = plantId;
+
+    final resp = await http.get(
+      _u('/devices', q),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (resp.statusCode != 200) {
+      throw Exception('getDevices failed: ${resp.statusCode} ${resp.body}');
+    }
+
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final list = (body['data'] ?? []) as List<dynamic>;
+
+    return list.map((e) {
+      final map = e as Map<String, dynamic>;
+      final d = DeviceSnapshot(
+        deviceId: map['deviceId']?.toString() ?? '',
+        plantId: map['plantId']?.toString() ?? '',
+        chamberId: map['chamberId']?.toString() ?? '',
+        name: map['name']?.toString() ?? 'Device',
+        status: map['status']?.toString() ?? 'offline',
+      );
+      
+      d.rssi = map['rssi'] as int?;
+      if (map['lastHeartbeat'] != null) {
+          d.lastHeartbeat = DateTime.tryParse(map['lastHeartbeat'].toString());
+      }
+      d.firmwareVersion = map['firmwareVersion']?.toString();
+      d.freeHeap = map['freeHeap'] as int?;
+      d.uptimeSec = map['uptime'] as int?;
+
+      return d;
+    }).toList();
+  }
+}
+
 /// =======================================================
 /// DASHBOARD SCREEN (MQTT + ALERTAS INDUSTRIALES)
 /// =======================================================
@@ -347,6 +381,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 
   final ActuatorsApi _actuatorsApi = ActuatorsApi(
+    baseUrl: AppConfig.backendBaseUrl,
+    apiVersion: AppConfig.apiVersion,
+  );
+
+  final DevicesApi _devicesApi = DevicesApi(
     baseUrl: AppConfig.backendBaseUrl,
     apiVersion: AppConfig.apiVersion,
   );
@@ -410,6 +449,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(AppConfig.spAccessTokenKey);
     _canControlActuators = prefs.getBool(AppConfig.spCanControlActuatorsKey) ?? false;
+
+    // Cargar dispositivos iniciales (si hay token)
+    if (_token != null) {
+      try {
+        final list = await _devicesApi.getDevices(token: _token!, plantId: AppConfig.plantId);
+        if (mounted) {
+            setState(() {
+                for (final d in list) {
+                    _devices[d.deviceId] = d;
+                }
+            });
+        }
+      } catch (e) {
+        debugPrint('Error cargando dispositivos iniciales: $e');
+      }
+    }
 
     await _connectMqtt();
     _startTimers();

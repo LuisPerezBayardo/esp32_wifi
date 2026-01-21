@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:esp32_wifi/config/app_config.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -20,23 +21,8 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _error;
   String? _success;
 
-  // =============================
-  // CONFIG QUE DEBE COINCIDIR
-  // =============================
-  // Backend default:
-  // Port: 3000
-  // API: /api/v1
-  // -----------------------------
-  // Ajusta el host según tu entorno:
-  // Android Emulator  → 10.0.2.2
-  // iOS Simulator     → localhost
-  // Celular físico    → IP de tu PC (ej: 192.168.1.50)
-  static const String _backendHost = '10.0.2.2'; // 👈 AJUSTA
-  static const int _backendPort = 3000;
-  static const String _apiVersion = 'v1';
 
-  Uri _url(String path) =>
-      Uri.parse('http://$_backendHost:$_backendPort/api/$_apiVersion$path');
+  Uri _url(String path) => Uri.parse('${AppConfig.apiUrl}$path');
 
   @override
   void dispose() {
@@ -67,11 +53,11 @@ class _SignupScreenState extends State<SignupScreen> {
             _url('/auth/register'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
-              // ⚠️ Si el backend espera "email" en vez de "username",
-              // cambia aquí a:
-              // "email": username,
-              "username": username,
+              "email": username, // Backend espera email
               "password": password,
+              "firstName": "Usuario", // Valores por defecto para pasar validación
+              "lastName": "Nuevo",
+              "phone": "",
             }),
           )
           .timeout(const Duration(seconds: 10));
@@ -242,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Backend: http://$_backendHost:$_backendPort/api/$_apiVersion',
+                        'Backend: ${AppConfig.backendBaseUrl}',
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'recover_password_screen.dart';
 import 'package:esp32_wifi/screens/signup_screen.dart';
 import 'dashboard_screen.dart';
+import 'package:esp32_wifi/config/app_config.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -25,21 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
   String? _error;
 
-  // =============================
-  // CONFIG QUE DEBE COINCIDIR
-  // =============================
-  // Backend: puerto 3000 por defecto :contentReference[oaicite:4]{index=4}
-  // API: /api/${apiVersion} :contentReference[oaicite:5]{index=5}
-  //
-  // Cambia SOLO ESTE host según tu caso:
-  // - Android emulator: 10.0.2.2
-  // - iOS simulator: localhost
-  // - Celular físico: IP de tu PC en la red (ej 192.168.1.50)
-  static const String _backendHost = '10.0.2.2'; // <-- AJUSTA AQUÍ
-  static const int _backendPort = 3000;
-  static const String _apiVersion = 'v1'; // coincide con default :contentReference[oaicite:6]{index=6}
+  
 
-  Uri _url(String path) => Uri.parse('http://$_backendHost:$_backendPort/api/$_apiVersion$path');
+  Uri _url(String path) => Uri.parse('${AppConfig.apiUrl}$path');
 
   @override
   void dispose() {
@@ -79,9 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _url('/auth/login'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
-              // ⚠️ Si tu backend espera "email" en vez de "username",
-              // cambia aquí a: "email": username
-              "username": username,
+              "email": username, // Backend espera "email"
               "password": password,
             }),
           )
@@ -292,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 12),
 
                       Text(
-                        'Backend: http://$_backendHost:$_backendPort/api/$_apiVersion',
+                        'Backend: ${AppConfig.backendBaseUrl}',
                         style: Theme.of(context).textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),

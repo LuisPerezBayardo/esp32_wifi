@@ -36,6 +36,8 @@ dependencies:
   crypto: ^3.0.3
   http: ^1.2.2
   shared_preferences: ^2.2.3
+  network_info_plus: ^5.0.3
+  permission_handler: ^11.3.1
 
 
 

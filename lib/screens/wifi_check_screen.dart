@@ -27,16 +27,17 @@ class _WifiCheckScreenState extends State<WifiCheckScreen> {
 
     // Escucha cambios en conectividad
     _subscription =
-        Connectivity().onConnectivityChanged.listen((result) {
-      if (result == ConnectivityResult.wifi) {
+        Connectivity().onConnectivityChanged.listen((results) {
+      // connectivity_plus 6+ devuelve una lista
+      if (results.contains(ConnectivityResult.wifi)) {
         _goToLogin();
       }
     });
   }
 
   Future<void> _checkWifi() async {
-    final result = await Connectivity().checkConnectivity();
-    if (result == ConnectivityResult.wifi) {
+    final results = await Connectivity().checkConnectivity();
+    if (results.contains(ConnectivityResult.wifi)) {
       _goToLogin();
     }
   }

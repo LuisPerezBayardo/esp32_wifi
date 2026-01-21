@@ -288,7 +288,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   leading: const Icon(Icons.wifi_find),
                   title: const Text('Escanear dispositivos WiFi'),
                   subtitle: const Text('Ir a la pantalla de escaneos'),
-                  onTap: () => Navigator.pushNamed(context, '/wifi_scans'),
+                  onTap: () => Navigator.pushNamed(context, '/wifi_scan_screen'),
                 ),
               ],
             ),

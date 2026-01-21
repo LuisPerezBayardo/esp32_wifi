@@ -7,6 +7,7 @@ import 'screens/profile_screen.dart';
 import 'screens/preferences_screen.dart';
 import 'screens/device_detail_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/wifi_scan_screen.dart';
 
 
 
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
 
         '/device_detail': (_) => const DeviceDetailScreen(),
         '/admin': (_) => const AdminScreen(),
+        '/wifi_scans': (_) => const WifiScanScreen(),
       },
     );
   }
