@@ -8,6 +8,8 @@ import 'package:esp32_wifi/screens/signup_screen.dart';
 import 'dashboard_screen.dart';
 import 'package:esp32_wifi/config/app_config.dart';
 
+import 'package:esp32_wifi/services/session_store.dart';
+import 'package:esp32_wifi/models/admin_models.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Login OK pero no llegó token en la respuesta (revisar authController.login).');
       }
 
-      // Guardar token local
+      // Guardar token local (Legacy/Simple)
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('access_token', token);
 
@@ -112,6 +114,17 @@ class _LoginScreenState extends State<LoginScreen> {
       final refresh = _extractRefreshToken(json);
       if (refresh != null && refresh.isNotEmpty) {
         await prefs.setString('refresh_token', refresh);
+      }
+      
+      // Guardar sesión completa para AdminScreen
+      final userData = json?['data']?['user'] ?? json?['user'];
+      if (userData is Map<String, dynamic>) {
+        try {
+          final adminUser = AdminUser.fromJson(userData);
+          await SessionStore.instance.save(SessionData(token: token, user: adminUser));
+        } catch (e) {
+          print('Error guardando SessionStore: $e');
+        }
       }
 
       if (!mounted) return;

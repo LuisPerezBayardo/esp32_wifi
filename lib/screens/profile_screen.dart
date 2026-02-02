@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:esp32_wifi/config/app_config.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -11,15 +13,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // =============================
-  // CONFIG (ajusta si cambia tu backend)
-  // =============================
-  static const String _backendHost = '10.0.2.2'; // Android emulator
-  static const int _backendPort = 3000;
-  static const String _apiVersion = 'v1';
-
-  Uri _url(String path) =>
-      Uri.parse('http://$_backendHost:$_backendPort/api/$_apiVersion$path');
+  
+  Uri _url(String path) => Uri.parse('${AppConfig.backendBaseUrl}/api/${AppConfig.apiVersion}$path');
 
   final _formKey = GlobalKey<FormState>();
 
@@ -257,6 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final canInteract = !_loading && !_saving;
+    final apiVersion=AppConfig.apiVersion;
 
     return Scaffold(
       appBar: AppBar(
@@ -450,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     const SizedBox(height: 12),
                     Text(
-                      'Endpoint: GET/PATCH /api/$_apiVersion/auth/profile',
+                      'Endpoint: GET/PATCH /api/$apiVersion/auth/profile',
                       style: Theme.of(context).textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),
